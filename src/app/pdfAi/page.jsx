@@ -1,5 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const [pdfFile, setPdfFile] = useState(null);
@@ -8,7 +11,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [lastCommand, setLastCommand] = useState(""); // For displaying last command
+  const [lastCommand, setLastCommand] = useState("");
   const utteranceRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -39,7 +42,6 @@ export default function Home() {
       console.error("Speech recognition error:", event.error);
     };
 
-    // Restart recognition when it ends to ensure continuous listening.
     recognition.onend = () => {
       recognition.start();
     };
@@ -67,7 +69,6 @@ export default function Home() {
   // ---------- Voice Command Handler ----------
   const handleVoiceCommand = (command) => {
     if (command.includes("upload pdf")) {
-      // Dispatch a synthetic click on the file input (if allowed)
       if (fileInputRef.current) {
         fileInputRef.current.dispatchEvent(
           new MouseEvent("click", { bubbles: true, cancelable: true })
@@ -91,7 +92,7 @@ export default function Home() {
     } else if (command.includes("read page") || command.includes("go to page")) {
       const matches = command.match(/page (\d+)/);
       if (matches && matches[1]) {
-        const pageNumber = parseInt(matches[1], 10) - 1; // zero-indexed
+        const pageNumber = parseInt(matches[1], 10) - 1;
         if (result && result.pages && pageNumber >= 0 && pageNumber < result.pages.length) {
           setCurrentPage(pageNumber);
           speakPage(pageNumber);
@@ -172,7 +173,6 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("file", pdfFile);
-      // Replace with your actual backend URL
       const response = await fetch("http://127.0.0.1:8000/analyze-pdf/", {
         method: "POST",
         body: formData,
@@ -197,7 +197,7 @@ export default function Home() {
     }
   };
 
-  // ---------- Handle Form Submission (Manual) ----------
+  // ---------- Handle Form Submission ----------
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!pdfFile) return;
@@ -219,7 +219,7 @@ export default function Home() {
     }
   };
 
-  // ---------- Slider & Navigation ----------
+  // ---------- Navigation Controls ----------
   const handleSliderChange = (e) => {
     const newPage = parseInt(e.target.value, 10);
     setCurrentPage(newPage);
@@ -244,168 +244,206 @@ export default function Home() {
 
   // ---------- Render UI ----------
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex flex-col items-center py-10 px-4">
-      {/* Display last recognized command */}
-      {lastCommand && (
-        <div className="mb-4 p-2 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-100 rounded">
-          Last command: <strong>{lastCommand}</strong>
-        </div>
-      )}
-      <h1 className="text-3xl font-bold mb-6">PDF Analyzer & Reader</h1>
-      <form
-        onSubmit={handleUpload}
-        className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full max-w-md"
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex flex-col items-center justify-center p-6">
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="w-full max-w-4xl"
       >
-        <label htmlFor="pdf" className="block text-sm font-bold mb-2">
-          Upload a PDF
-        </label>
-        <input
-          id="pdf"
-          type="file"
-          accept="application/pdf"
-          onChange={handleFileChange}
-          ref={fileInputRef}
-          className="block w-full text-sm text-gray-500 dark:text-gray-300
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-md file:border-0
-            file:text-sm file:font-semibold
-            file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300
-            hover:file:bg-blue-100 dark:hover:file:bg-blue-800
-            mb-4"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-500 hover:bg-blue-600 transition-colors text-white py-2 px-4 rounded"
-        >
-          {loading ? "Processing..." : "Process PDF"}
-        </button>
-      </form>
+        {/* Command Display */}
+        {lastCommand && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6"
+          >
+            <Card className="bg-white/80 backdrop-blur">
+              <CardContent className="p-4">
+                <p className="text-gray-800">
+                  Last command: <span className="font-semibold">{lastCommand}</span>
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-      {/* PDF Preview */}
-      {pdfPreview && (
-        <div className="mt-8 w-full max-w-md">
-          <h2 className="text-xl font-semibold mb-2">PDF Preview</h2>
-          <embed
-            src={pdfPreview}
-            type="application/pdf"
-            className="w-full h-96 border rounded"
-          />
-        </div>
-      )}
+        {/* Main Content */}
+        <Card className="bg-white/80 backdrop-blur shadow-xl">
+          <CardContent className="p-8">
+            <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">PDF Analyzer & Reader</h1>
+            
+            <form onSubmit={handleUpload} className="mb-8">
+              <label htmlFor="pdf" className="block text-lg font-semibold text-gray-700 mb-3">
+                Upload a PDF
+              </label>
+              <input
+                id="pdf"
+                type="file"
+                accept="application/pdf"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-purple-50 file:text-purple-700
+                  hover:file:bg-purple-100
+                  mb-4"
+              />
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-full transition-colors"
+              >
+                {loading ? "Processing..." : "Process PDF"}
+              </Button>
+            </form>
 
-      {/* Speech Controls & Navigation */}
-      {result && (
-        <div className="mt-4 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={togglePlayback}
-              className="bg-purple-500 hover:bg-purple-600 transition-colors text-white py-2 px-4 rounded"
-            >
-              {isPlaying ? (
-                <span className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M10 9v6m4-6v6"
+            {/* PDF Preview */}
+            {pdfPreview && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8"
+              >
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">PDF Preview</h2>
+                <div className="border rounded-xl overflow-hidden">
+                  <embed
+                    src={pdfPreview}
+                    type="application/pdf"
+                    className="w-full h-96"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Speech Controls */}
+            {result && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-4 flex-wrap justify-center">
+                    <Button
+                      onClick={togglePlayback}
+                      className={`${
+                        isPlaying ? "bg-purple-600" : "bg-purple-600"
+                      } hover:bg-opacity-90 text-white px-6`}
+                    >
+                      <span className="flex items-center">
+                        {isPlaying ? (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              className="h-5 w-5 mr-2"
+                              strokeWidth="2"
+                            >
+                              <rect x="6" y="4" width="4" height="16" rx="1" />
+                              <rect x="14" y="4" width="4" height="16" rx="1" />
+                            </svg>
+                            Pause
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              className="h-5 w-5 mr-2"
+                              strokeWidth="2"
+                            >
+                              <path
+                                d="M8 5.14v14.72a1 1 0 001.5.86l11-7.36a1 1 0 000-1.72l-11-7.36a1 1 0 00-1.5.86z"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            Play
+                          </>
+                        )}
+                      </span>
+                    </Button>
+                    <Button onClick={handlePrevious} className="bg-gray-600 hover:bg-gray-700">
+                      Previous
+                    </Button>
+                    <input
+                      type="range"
+                      min="0"
+                      max={result.pages.length - 1}
+                      value={currentPage}
+                      onChange={handleSliderChange}
+                      className="w-64"
                     />
-                  </svg>
-                  Pause
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M14.752 11.168l-5.197-3.028A1 1 0 008 9v6a1 1 0 001.555.832l5.197-3.028a1 1 0 000-1.664z"
-                    />
-                  </svg>
-                  Play
-                </span>
-              )}
-            </button>
-            <button
-              onClick={handlePrevious}
-              className="bg-gray-500 hover:bg-gray-600 transition-colors text-white py-2 px-4 rounded"
-            >
-              Previous
-            </button>
-            <input
-              type="range"
-              min="0"
-              max={result.pages.length - 1}
-              value={currentPage}
-              onChange={handleSliderChange}
-              className="w-64"
-            />
-            <button
-              onClick={handleNext}
-              className="bg-gray-500 hover:bg-gray-600 transition-colors text-white py-2 px-4 rounded"
-            >
-              Next
-            </button>
-          </div>
-          <p>
-            Currently reading page: <strong>{currentPage + 1}</strong> of{" "}
-            {result.pages.length}
-          </p>
-        </div>
-      )}
+                    <Button onClick={handleNext} className="bg-gray-600 hover:bg-gray-700">
+                      Next
+                    </Button>
+                  </div>
+                  <p className="text-gray-700 font-medium">
+                    Page <span className="font-bold">{currentPage + 1}</span> of{" "}
+                    <span className="font-bold">{result.pages.length}</span>
+                  </p>
+                </div>
 
-      {/* Page-wise Analysis Results */}
-      {result && result.pages && (
-        <div className="mt-8 w-full max-w-4xl">
-          <h2 className="text-2xl font-semibold mb-4">Analysis Results</h2>
-          {result.pages.map((page, index) => (
-            <div
-              key={page.page_number}
-              className={`bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6 border-2 ${
-                currentPage === index ? "border-blue-500" : "border-transparent"
-              }`}
-            >
-              <h3 className="text-xl font-bold mb-2">Page {page.page_number}</h3>
-              <div className="mb-2">
-                <h4 className="font-semibold">Extracted Text:</h4>
-                <p className="whitespace-pre-line">{page.page_text}</p>
-              </div>
-              <div className="mb-2">
-                <h4 className="font-semibold">OCR Text:</h4>
-                <p className="whitespace-pre-line">{page.ocr_text}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold">Images &amp; Descriptions:</h4>
-                {page.images.length > 0 ? (
-                  <ul className="list-disc ml-5">
-                    {page.images.map((img) => (
-                      <li key={img.image_index}>
-                        Image {img.image_index}: {img.description}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No images found on this page.</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+                {/* Analysis Results */}
+                <div className="mt-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Analysis Results</h2>
+                  {result.pages.map((page, index) => (
+                    <motion.div
+                      key={page.page_number}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className={`mb-4 ${
+                        currentPage === index ? "ring-2 ring-purple-500" : ""
+                      }`}>
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-bold text-gray-800 mb-4">
+                            Page {page.page_number}
+                          </h3>
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-semibold text-gray-700 mb-2">Extracted Text:</h4>
+                              <p className="text-gray-600 whitespace-pre-line">{page.page_text}</p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-700 mb-2">OCR Text:</h4>
+                              <p className="text-gray-600 whitespace-pre-line">{page.ocr_text}</p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-700 mb-2">
+                                Images & Descriptions:
+                              </h4>
+                              {page.images.length > 0 ? (
+                                <ul className="list-disc ml-5 text-gray-600">
+                                  {page.images.map((img) => (
+                                    <li key={img.image_index}>
+                                      Image {img.image_index}: {img.description}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-gray-600">No images found on this page.</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </main>
   );
-}
+} 
